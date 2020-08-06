@@ -1,0 +1,97 @@
+General:
+    comment: Use arutema cleaned label (pred my 0622 preds)
+    seed: 1222
+    fp16: True
+    amp_level: O1
+    multi_gpu_mode: ddp
+    gpus: [0]
+    epoch: &epoch 30
+    grad_acc: 2
+    frozen_bn: False
+    debug: False  # This value overwritten in train.py
+
+Data:
+    dataset:
+        # when submit kernel
+        # train_df: ../input/train-5kfold_remove_noisy_by_0622_rad_13_08_ka_15_10.csv
+        # Reproduce
+        train_df: ../output/model/final_1/local_preds_final_1_efficientnet-b1_removed_noise_thresh_rad_13_08_ka_15_10.csv
+        kfold: -1
+        tile_option: normal
+        random_tile_train: True
+        random_rotate_tile: False
+        random_tile_white: False
+        img_size: 1536
+        num_tile: 64
+        tile_size: 192
+        mode_aug: True
+        spiral_tile: False
+        mixup: False
+        cutmix: False
+        cutmix_epoch: 0
+        nms_dataset: False
+        mix_nms_normal_tile: False
+        concat_ch: False
+        cycle_gan_aug: False
+        softmax: False
+        use_clean_label: False
+        clean_label_type: pbnr # pbc, pbnr, both
+    dataloader:
+        batch_size: 6
+        num_workers: 4
+
+Model:
+    base: efficientnet-b1
+    in_channel: 3
+    out_channel: 10
+    pretrained: True
+    pool_type: gem
+
+Optimizer:
+    optimizer:
+        name: Adam
+        params:
+            # 10 times on epoch 0 by warmup scheduler
+            lr: !!python/float 3e-5
+            amsgrad: False
+    lr_scheduler:
+        name: CosineAnnealingLR
+        params:
+            T_max: *epoch
+            last_epoch: -1
+
+Loss:
+    base_loss:
+        name: BCEWithLogitsLoss
+        params:
+            reduction: mean
+        weight: [1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]
+
+Augmentation:
+    train:
+        - name: Transpose
+          params:
+              p: 0.5
+        - name: HorizontalFlip
+          params:
+              p: 0.5
+        - name: VerticalFlip
+          params:
+              p: 0.5
+        - name: ShiftScaleRotate
+          params:
+              p: 0.5
+              rotate_limit: 10
+        - name: RandomBrightnessContrast
+          params:
+              p: 0.5
+              brightness_limit: 0.2
+              contrast_limit: 0.2
+        - name: Cutout
+          params:
+              p: 0.5
+              num_holes: 36
+              max_h_size: 128
+              max_w_size: 128
+              fill_value: 0
+    valid:

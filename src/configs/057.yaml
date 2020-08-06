@@ -1,0 +1,86 @@
+General:
+    comment: change output channel, 5, 10, 15, 16, comparing 51, 55, 56, 57
+    seed: 1222
+    fp16: True
+    amp_level: O1
+    multi_gpu_mode: ddp
+    gpus: [0]
+    epoch: &epoch 30
+    grad_acc: 2
+    debug: False  # This value overwritten in train.py
+
+Data:
+    dataset:
+        train_df: ../input/train-5kfold.csv
+        kfold: -1
+        tile_option: normal
+        random_tile_train: True
+        random_rotate_tile: False
+        random_tile_white: False
+        img_size: 1536
+        num_tile: &num_tile 36
+        box_scale: &box_scale 1.0
+    dataloader:
+        batch_size: 6
+        num_workers: 5
+
+Model:
+    base: efficientnet-b1
+    in_channel: 3
+    out_channel: 16
+    pretrained: True
+    pool_type: gem
+
+Optimizer:
+    optimizer:
+        name: Adam
+        params:
+            lr: !!python/float 3e-5
+            amsgrad: False
+    lr_scheduler:
+        name: CosineAnnealingLR
+        params:
+            T_max: *epoch
+            last_epoch: -1
+
+Loss:
+    base_loss:
+        name: BCEWithLogitsLoss
+        params:
+            reduction: mean
+
+Augmentation:
+    train:
+        - name: Transpose
+          params:
+              p: 0.5
+        - name: HorizontalFlip
+          params:
+              p: 0.5
+        - name: VerticalFlip
+          params:
+              p: 0.5
+        - name: RandomRotate90
+          params:
+              p: 0.5
+        - name: ShiftScaleRotate
+          params:
+              p: 0.5
+              rotate_limit: 10
+              shift_limit: 0.05
+              scale_limit: 0.05
+        - name: OneOf
+          member:
+              - name: ElasticTransform
+                params:
+                    alpha: 120
+                    sigma: 6
+                    alpha_affine: 3.6
+              - name: GridDistortion
+              - name: OpticalDistortion
+                params:
+                    distort_limit: 0.1
+                    shift_limit: 0.1
+          params:
+              p: 0.5
+    valid:

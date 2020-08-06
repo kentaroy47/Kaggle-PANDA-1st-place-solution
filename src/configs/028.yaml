@@ -1,0 +1,112 @@
+General:
+    comment: Test resnet34, adaptive kmeans tile, save weights, cosine anealing, comparing num_tile and box_scale
+    seed: 1222
+    fp16: True
+    amp_level: O1
+    multi_gpu_mode: ddp
+    gpus: [0]
+    epoch: &epoch 30
+    grad_acc: 1
+    debug: False  # This value overwritten in train.py
+
+Data:
+    dataset:
+        train_df: ../input/train-5kfold.csv
+        train_img_dir: ../input/train_images
+        kfold: -1
+        tile_option: adaptive_kmeans
+        random_tile_train: True
+        random_rotate_tile: True
+        random_tile_white: False
+        img_size: 768
+        num_tile: &num_tile 16
+        box_scale: &box_scale 1.0
+    dataloader:
+        # If use_sampler is True, batch size of each loader is batch_size / (number of gpus)
+        batch_size: 64
+        num_workers: 4
+        # These option is used for ddp
+        train:
+            use_sampler: True
+            change_rate_sampler: False
+            max_pos_rate: 1.0
+        valid:
+            use_sampler: True
+        test:
+            use_sampler: False
+
+Model:
+    base: resnet34
+    in_channel: 3
+    out_channel: 1
+    pretrained: True
+    pool_type: gem
+
+Optimizer:
+    optimizer:
+        name: Adam
+        params:
+            lr: !!python/float 1e-4
+            amsgrad: False
+    lr_scheduler:
+        name: CosineAnnealingLR
+        params:
+            T_max: *epoch
+            eta_min: !!python/float 1e-5
+            last_epoch: -1
+
+# TODO: implementation
+#Loss:
+#    base_loss:
+#        name: BCEDiceLoss
+#        params:
+#            alpha: 0.7
+#            softmax: True
+
+Augmentation:
+    # tta: hflip, vflip
+    tta: []
+    args_compose:
+        additional_targets:
+            img_global: image
+    train:
+        - name: HorizontalFlip
+          params:
+              p: 0.5
+        - name: VerticalFlip
+          params:
+              p: 0.5
+        - name: RandomRotate90
+          params:
+              p: 0.5
+        - name: ShiftScaleRotate
+          params:
+              p: 0.5
+              rotate_limit: 10
+              shift_limit: 0.05
+              scale_limit: 0.05
+        - name: OneOf
+          member:
+              - name: ElasticTransform
+                params:
+                    alpha: 120
+                    sigma: 6
+                    alpha_affine: 3.6
+              - name: GridDistortion
+              - name: OpticalDistortion
+                params:
+                    distort_limit: 0.1
+                    shift_limit: 0.1
+          params:
+              p: 0.5
+        - name: Normalize
+          params:
+              p: 1.0
+              num_tile: *num_tile
+              box_scale: *box_scale
+    valid:
+        - name: Normalize
+          params:
+              p: 1.0
+              num_tile: *num_tile
+              box_scale: *box_scale

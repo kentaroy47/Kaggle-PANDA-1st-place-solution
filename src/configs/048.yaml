@@ -1,0 +1,89 @@
+General:
+    comment: resnet34, img size 256*6 = 1536
+    seed: 1222
+    fp16: True
+    amp_level: O1
+    multi_gpu_mode: ddp
+    gpus: [0]
+    epoch: &epoch 30
+    grad_acc: 1
+    debug: False  # This value overwritten in train.py
+
+Data:
+    dataset:
+        train_df: ../input/train-5kfold.csv
+        kfold: -1
+        tile_option: adaptive_kmeans
+        random_tile_train: True
+        random_rotate_tile: False
+        random_tile_white: True
+        img_size: 1536
+        num_tile: &num_tile 36
+        box_scale: &box_scale 1.3
+    dataloader:
+        batch_size: 16
+        num_workers: 4
+
+Model:
+    base: resnet34
+    in_channel: 3
+    out_channel: 5
+    pretrained: True
+    pool_type: gem
+
+Optimizer:
+    optimizer:
+        name: Adam
+        params:
+            lr: !!python/float 3e-5
+            amsgrad: False
+    lr_scheduler:
+        name: CosineAnnealingLR
+        params:
+            T_max: *epoch
+            last_epoch: -1
+
+Loss:
+    base_loss:
+        name: BCEWithLogitsLoss
+        params:
+            reduction: mean
+
+Augmentation:
+    args_compose:
+        additional_targets:
+            img_global: image
+    train:
+        - name: Transpose
+          params:
+              p: 0.5
+        - name: HorizontalFlip
+          params:
+              p: 0.5
+        - name: VerticalFlip
+          params:
+              p: 0.5
+        - name: RandomRotate90
+          params:
+              p: 0.5
+        - name: ShiftScaleRotate
+          params:
+              p: 0.5
+              rotate_limit: 10
+              shift_limit: 0.05
+              scale_limit: 0.05
+        - name: OneOf
+          member:
+              - name: ElasticTransform
+                params:
+                    alpha: 120
+                    sigma: 6
+                    alpha_affine: 3.6
+              - name: GridDistortion
+              - name: OpticalDistortion
+                params:
+                    distort_limit: 0.1
+                    shift_limit: 0.1
+          params:
+              p: 0.5
+    valid:

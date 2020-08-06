@@ -1,0 +1,97 @@
+General:
+    comment: New dataset, num tile 36, tilesize 256, tifflevel 1, resnet34
+    seed: 1222
+    fp16: True
+    amp_level: O1
+    multi_gpu_mode: ddp
+    gpus: [0]
+    epoch: &epoch 30
+    grad_acc: 2
+    debug: False  # This value overwritten in train.py
+
+Data:
+    dataset:
+        train_df: ../input/train-5kfold.csv
+        kfold: -1
+        tile_option: adaptive_kmeans
+        random_tile_train: True
+        random_rotate_tile: False
+        random_tile_white: False
+        img_size: 768
+        num_tile: &num_tile 36
+        box_scale: &box_scale 1.0
+    dataloader:
+        batch_size: 32
+        num_workers: 4
+
+Model:
+    base: resnet34
+    in_channel: 3
+    out_channel: 1
+    pretrained: True
+    pool_type: gem
+
+Optimizer:
+    optimizer:
+        name: Adam
+        params:
+            lr: !!python/float 1e-4
+            amsgrad: False
+    lr_scheduler:
+        name: CosineAnnealingLR
+        params:
+            T_max: *epoch
+            eta_min: !!python/float 2e-5
+            last_epoch: -1
+
+Loss:
+    base_loss:
+        name: BalancedL1Loss
+        params:
+            reduction: mean
+
+Augmentation:
+    args_compose:
+        additional_targets:
+            img_global: image
+    train:
+        - name: HorizontalFlip
+          params:
+              p: 0.5
+        - name: VerticalFlip
+          params:
+              p: 0.5
+        - name: RandomRotate90
+          params:
+              p: 0.5
+        - name: ShiftScaleRotate
+          params:
+              p: 0.5
+              rotate_limit: 10
+              shift_limit: 0.05
+              scale_limit: 0.05
+        - name: OneOf
+          member:
+              - name: ElasticTransform
+                params:
+                    alpha: 120
+                    sigma: 6
+                    alpha_affine: 3.6
+              - name: GridDistortion
+              - name: OpticalDistortion
+                params:
+                    distort_limit: 0.1
+                    shift_limit: 0.1
+          params:
+              p: 0.5
+        - name: Normalize
+          params:
+              p: 1.0
+              mean: [0.85526167, 0.70408623, 0.80214337]
+              std: [0.40008769, 0.52469908, 0.42673911]
+    valid:
+        - name: Normalize
+          params:
+              p: 1.0
+              mean: [0.85526167, 0.70408623, 0.80214337]
+              std: [0.40008769, 0.52469908, 0.42673911]
