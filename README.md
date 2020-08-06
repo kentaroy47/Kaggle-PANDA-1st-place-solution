@@ -141,7 +141,7 @@ $ python data_process/s12_remove_noise_by_local_preds.py
 
 - Each fold needs about 15 hours.
 
-  ## Training model 2:
+  ## Training model 2(fam_taro model):
 
 ```bash
 $ cd src
@@ -151,7 +151,7 @@ $ python train.py --config configs/final_2.yaml --kfold 4
 $ python train.py --config configs/final_2.yaml --kfold 5
 ```
 
-## Training model 1:
+## Training model 1(arutema model):
 
 Please run `train_famdata-kfolds.ipynb` on jupyter notebook or
 
