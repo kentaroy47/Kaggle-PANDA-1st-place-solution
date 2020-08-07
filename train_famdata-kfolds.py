@@ -108,7 +108,7 @@ np.random.seed(42)
 data_dir = './input/'
 # load clean labels
 df_train = pd.read_csv("./output/model/final_1/local_preds_final_1_efficientnet-b1_removed_noise_thresh_16.csv")
-image_folder = os.path.join(data_dir, 'train')
+image_folder = os.path.join(data_dir, 'train_256_36')
 
 warmup_epo = 1
 

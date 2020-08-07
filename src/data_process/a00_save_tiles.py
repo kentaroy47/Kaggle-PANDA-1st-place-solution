@@ -4,6 +4,8 @@ n_tiles = 36
 batch_size = 1
 num_workers = 8
 
+debug = False
+
 import os
 import sys
 import time
@@ -15,10 +17,12 @@ import PIL.Image
 import matplotlib.pyplot as plt
 from sklearn.metrics import cohen_kappa_score
 from tqdm import tqdm_notebook as tqdm
+from torch.utils.data import DataLoader, Dataset
+import torch
 
-# # Config
-data_dir = '../input/prostate-cancer-grade-assessment/' # where you place the train_images
-out_dir = "../input/" # please place the tiles in input.
+# Config
+data_dir = '../input/prostate-cancer-grade-assessment/'
+out_dir = "../input/"
 df_train = pd.read_csv(os.path.join(data_dir, 'train.csv'))
 image_folder = os.path.join(data_dir, 'train_images')
 
@@ -84,7 +88,7 @@ class PANDADataset(Dataset):
         
         # Load images as tiles
         tiff_file = os.path.join(image_folder, f'{img_id}.tiff')
-        image = skimage.io.MultiImage(tiff_file)[1]
+        image = skimage.io.MultiImage(tiff_file)[1] # load mid-resolution
         times = 1
         for iii in range(times):
             tiles, OK = get_tiles(image, self.tile_mode, self.transform)
@@ -110,19 +114,18 @@ class PANDADataset(Dataset):
                     w1 = w * image_size
                     images[h1:h1+image_size, w1:w1+image_size] = this_img
 
-            # Make image augumentations
-            #if self.transform is not None:
-            #    images = self.transform(image=images)['image']
+            # Writeout image
             images = images.astype(np.float32)
             images /= 255
-            images = images.transpose(2, 0, 1)
+            images = images.transpose(2, 0, 1)[::-1] # to BGR
+            print(images.shape)
 
-            img = (images*255).astype("uint8").transpose(1, 2, 0) # [H,C,W] order.. why did I do this. this is brought back to [C,W,H] in train scripts..
+            img = (images*255).astype("uint8").transpose(1, 2, 0) # [H,C,W] order..is brought back to [C,W,H] in train scripts..
             np.savez_compressed(os.path.join(out_dir, "train_{}_{}/{}".format(image_size, n_tiles, img_id, iii)), img) # we save by npz
         
         label = np.zeros(5).astype(np.float32)
         label[:row.isup_grade] = 1.
-        return torch.tensor(images), torch.tensor(label), img_id
+        return 1, 1, 1
 
 
 import os
@@ -136,5 +139,22 @@ train_loader = torch.utils.data.DataLoader(dataset_show, batch_size=batch_size, 
 
 # Generate npz files
 bar = tqdm(train_loader)
+cnt = 0
 for (data, target, id) in bar:
+    cnt += 1
+    if cnt == 10 and debug:
+        break
     pass
+
+
+"""
+# debug data load
+file = "./train_256_36/004dd32d9cd167d9cc31c13b704498af.npz"
+images = np.load(file)["arr_0"]
+images = images.transpose(2, 0, 1)
+
+img = images/255
+img = np.transpose(img)
+print(img.shape)
+plt.imshow(1. - img)
+"""
