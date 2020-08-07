@@ -1,144 +1,30 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
-kernel_type = 'resnet34'
-modelname = kernel_type
-
-fold = 0
 tile_size = 256
 image_size = 256
 n_tiles = 36
 batch_size = 1
 num_workers = 8
-out_dim = 5
-init_lr = 3e-4
-warmup_factor = 10
-
-kernel_type += "v2_tile{}_imsize{}".format(n_tiles, image_size)
-
-
-# In[2]:
-
-
-DEBUG = False
-
-
-# In[3]:
-
 
 import os
 import sys
-
-
-# In[4]:
-
-
 import time
 import skimage.io
 import numpy as np
 import pandas as pd
 import cv2
 import PIL.Image
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.optim import lr_scheduler
-from torch.utils.data import DataLoader, Dataset
-from torch.utils.data.sampler import SubsetRandomSampler, RandomSampler, SequentialSampler
-import albumentations
-from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
 from sklearn.metrics import cohen_kappa_score
 from tqdm import tqdm_notebook as tqdm
-import torchvision
-
 
 # # Config
-
-# In[5]:
-
-
-data_dir = '../input/'
+data_dir = '../input/prostate-cancer-grade-assessment/' # where you place the train_images
+out_dir = "../input/" # please place the tiles in input.
 df_train = pd.read_csv(os.path.join(data_dir, 'train.csv'))
-image_folder = os.path.join(data_dir, 'train')
-
-warmup_epo = 1
-n_epochs = 1 if DEBUG else 30
-df_train = df_train.sample(100).reset_index(drop=True) if DEBUG else df_train
-
-device = torch.device('cuda')
+image_folder = os.path.join(data_dir, 'train_images')
 
 print(image_folder)
 
-
-# In[6]:
-
-
-df_train.head()
-
-
-# # Create Folds
-
-# In[7]:
-
-
-def erase(df_train):
-    df_train2 = df_train
-    erase = []
-    for i, id in enumerate(df_train2["image_id"].to_numpy()):
-        if not os.path.isfile(os.path.join(image_folder, f'{id}.png')):
-            erase.append(i)
-            pass
-        #img = cv2.imread(os.path.join(image_folder, f'{id}.png'))
-        
-    return df_train.drop(erase)
-
-df_train = erase(df_train).reset_index()
-
-
-# In[8]:
-
-
-len(df_train)
-df_train = df_train.drop("index", 1)
-
-
-# In[9]:
-
-
-skf = StratifiedKFold(5, shuffle=True, random_state=42)
-df_train['fold'] = -1
-for i, (train_idx, valid_idx) in enumerate(skf.split(df_train, df_train['isup_grade'])):
-    df_train.loc[valid_idx, 'fold'] = i
-
-df_train.tail()
-
-
-# In[10]:
-
-
-train_idx = np.where((df_train['fold'] != fold))[0]
-valid_idx = np.where((df_train['fold'] == fold))[0]
-
-df_this  = df_train.loc[train_idx]
-df_valid = df_train.loc[valid_idx]
-
-
-# In[11]:
-
-
-transforms_val = albumentations.Compose([])
-
-
 # # Dataset
-
-# In[12]:
-
-
 def get_tiles(img, mode=0, transform=None):
         result = []
         h, w, c = img.shape
@@ -199,8 +85,7 @@ class PANDADataset(Dataset):
         # Load images as tiles
         tiff_file = os.path.join(image_folder, f'{img_id}.tiff')
         image = skimage.io.MultiImage(tiff_file)[1]
-        
-		times = 1
+        times = 1
         for iii in range(times):
             tiles, OK = get_tiles(image, self.tile_mode, self.transform)
 
@@ -233,35 +118,23 @@ class PANDADataset(Dataset):
             images = images.transpose(2, 0, 1)
 
             img = (images*255).astype("uint8").transpose(1, 2, 0) # [H,C,W] order.. why did I do this. this is brought back to [C,W,H] in train scripts..
-            np.savez(os.path.join(data_dir, "train_{}_{}/{}".format(image_size, n_tiles, img_id, iii), img)) # we save by npz
+            np.savez_compressed(os.path.join(out_dir, "train_{}_{}/{}".format(image_size, n_tiles, img_id, iii)), img) # we save by npz
         
         label = np.zeros(5).astype(np.float32)
         label[:row.isup_grade] = 1.
         return torch.tensor(images), torch.tensor(label), img_id
 
 
-# # Augmentations
-
-
 import os
-os.makedirs(os.path.join(data_dir, "train_{}_{}".format(image_size, n_tiles)), exist_ok=True)
+os.makedirs(os.path.join(out_dir, "train_{}_{}".format(image_size, n_tiles)), exist_ok=True)
 import cv2
 import matplotlib.pyplot as plt
 
+# declare dataloader
 dataset_show = PANDADataset(df_train, image_size, n_tiles, transform=None)
-train_loader = torch.utils.data.DataLoader(dataset_show, batch_size=batch_size, num_workers=8)
+train_loader = torch.utils.data.DataLoader(dataset_show, batch_size=batch_size, num_workers=num_workers)
 
-
-# In[20]:
-
-
+# Generate npz files
 bar = tqdm(train_loader)
 for (data, target, id) in bar:
     pass
-
-
-# In[ ]:
-
-
-
-
