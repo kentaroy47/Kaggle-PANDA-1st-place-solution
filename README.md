@@ -2,6 +2,8 @@
 
 You can skip some steps (because some outputs are already in `input` dir)
 
+Our model and codes are open sourced under CC-BY-NC 4.0. Please see LICENSE for specifics.
+
 ## 1. Environment
 
 You can choose using docker or not.
