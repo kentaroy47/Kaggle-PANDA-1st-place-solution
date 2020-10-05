@@ -1,14 +1,19 @@
-# Team PND 1st place model
+# Kaggle-PANDA-1st-place-solution
 
-You can skip some steps (because some outputs are already in `input` dir)
+This is the 1st place solution of the [PANDA Competition](https://www.kaggle.com/c/prostate-cancer-grade-assessment), where the specific writeup is [here](https://www.kaggle.com/c/prostate-cancer-grade-assessment/discussion/169143).
 
-Our model and codes are open sourced under CC-BY-NC 4.0. Please see LICENSE for specifics.
+The codes and models are created by Team PND, [@yukkyo](https://github.com/yukkyo) and [@kentaroy47](https://github.com/kentaroy47).
+
+Our model and codes are open sourced under `CC-BY-NC 4.0`. Please see LICENSE for specifics.
+
+You can skip some steps (because some outputs are already in `input` dir).
+
 
 ## 1. Environment
 
 You can choose using docker or not.
 
-### 1.1 No use docker (haven't tested)
+### 1.1 Don't use docker (haven't tested..)
 
 - Ubuntu 18.04
 - Python 3.7.2
