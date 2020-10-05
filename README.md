@@ -1,4 +1,5 @@
 # Kaggle-PANDA-1st-place-solution
+![](input/eyecatch.png)
 
 This is the 1st place solution of the [PANDA Competition](https://www.kaggle.com/c/prostate-cancer-grade-assessment), where the specific writeup is [here](https://www.kaggle.com/c/prostate-cancer-grade-assessment/discussion/169143).
 
