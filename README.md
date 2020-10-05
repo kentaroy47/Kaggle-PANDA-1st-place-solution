@@ -187,6 +187,9 @@ Models reproducing 1st place score is saved in `./final_models`
     - score: public 0.894, private 0.939 (1st)
     - url: https://www.kaggle.com/kyoshioka47/late-famrepro-fam-reproaru-ensemble-0725?scriptVersionId=39879219
     - `submitted_notebook.ipynb`
+  - Simple 5-fold model to get private 0.935(3rd)
+    - url: https://www.kaggle.com/kyoshioka47/5-fold-effb0-with-cleaned-labels-pb-0-935
+    
 - You can change paths by changing bellow.  
   - You must change Kaggle Dataset path for using your reproduced weights
 
