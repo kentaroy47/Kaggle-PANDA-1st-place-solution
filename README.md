@@ -8,6 +8,8 @@ Our model and codes are open sourced under `CC-BY-NC 4.0`. Please see LICENSE fo
 
 You can skip some steps (because some outputs are already in `input` dir).
 
+## Slide describing our solution!
+https://docs.google.com/presentation/d/1Ies4vnyVtW5U3XNDr_fom43ZJDIodu1SV6DSK8di6fs/
 
 ## 1. Environment
 
