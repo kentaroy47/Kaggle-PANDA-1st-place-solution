@@ -9,6 +9,13 @@ Our model and codes are open sourced under `CC-BY-NC 4.0`. Please see LICENSE fo
 
 You can skip some steps (because some outputs are already in `input` dir).
 
+### Used in
+Nature Medicine: [W.Bulten, Artificial intelligence for diagnosis and Gleason grading of prostate cancer: the PANDA challenge](https://www.nature.com/articles/s41591-021-01620-2)
+
+npj Precision Oncology: [Y.Tolkach, An international multi-institutional validation study of the algorithm for prostate cancer detection and Gleason grading](https://www.nature.com/articles/s41698-023-00424-6)
+
+Cancers: [Label distribution learning for automatic cancer grading of histopathological images of prostate cancer](https://www.mdpi.com/2072-6694/15/5/1535)
+
 ## Slide describing our solution!
 https://docs.google.com/presentation/d/1Ies4vnyVtW5U3XNDr_fom43ZJDIodu1SV6DSK8di6fs/
 
